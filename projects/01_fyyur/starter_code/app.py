@@ -246,7 +246,7 @@ def search_venues():
   response['data'] = data
   return render_template('pages/search_venues.html', results=response, search_term=request.form.get('search_term', ''))
 
-  
+
   # TODO: implement search on artists with partial string search. Ensure it is case-insensitive.
   # seach for Hop should return "The Musical Hop".
   # search for "Music" should return "The Musical Hop" and "Park Square Live Music & Coffee"
@@ -258,7 +258,7 @@ def search_venues():
       "num_upcoming_shows": 0,
     }]
   }
-  
+
 
 @app.route('/venues/<int:venue_id>')
 def show_venue(venue_id):
