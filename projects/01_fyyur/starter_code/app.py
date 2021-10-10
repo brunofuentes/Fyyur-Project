@@ -201,35 +201,7 @@ def venues():
             'venues': data_venues
         })
 
-        return render_template('pages/venues.html', areas=data_areas)
-
-    # venues = Venue.query.order_by(Venue.state, Venue.city).all()
-
-    # data = []
-    # tmp = {}
-    # previousCity = None
-    # previousState = None
-
-    # for venue in venues:
-    #     venue_data = {
-    #         'id': venue.id,
-    #         'name': venue.name,
-    #         'num_upcoming_shows': len(list(filter(lambda x: x.start_time > datetime.today(), venue.shows)))
-
-    #     }
-    #     if venue.city == previousCity and venue.state == previousState:
-    #         tmp['venues'].append(venue_data)
-    #     else:
-    #         if previousCity is not None:
-    #             data.append(tmp)
-    #         tmp['city'] = venue.city
-    #         tmp['state'] = venue.state
-    #         tmp['venues'] = [venue_data]
-    #     previousCity = venue.city
-    #     previousState = venue.state
-
-    # data.append(tmp)
-    # return render_template('pages/venues.html', areas=venues)
+    return render_template('pages/venues.html', areas=data_areas)
 
 @app.route('/venues/search', methods=['POST'])
 def search_venues():
@@ -291,7 +263,12 @@ def create_venue_submission():
         venue.phone = request.form['phone']
         tmp_genres = request.form.getlist('genres')
         venue.genres = ','.join(tmp_genres)
+        venue.image_link = request.form['image_link']
         venue.facebook_link = request.form['facebook_link']
+        venue.website = request.form['website']
+        venue.seeking_talent = True if 'seeking_talent' in request.form else False
+        venue.seeking_description = request.form['seeking_description']
+
         db.session.add(venue)
         db.session.commit()
     except:
@@ -306,7 +283,7 @@ def create_venue_submission():
             flash('Venue ' + request.form['name'] + ' was successfully listed!')
         return render_template('pages/home.html')
 
-@app.route('/venues/<venue_id>', methods=['POST'])
+@app.route('/venues/<int:venue_id>/delete', methods=['POST'])
 def delete_venue(venue_id):
     error = False
     try:
@@ -419,15 +396,28 @@ def edit_artist_submission(artist_id):
 
 @app.route('/venues/<int:venue_id>/edit', methods=['GET'])
 def edit_venue(venue_id):
+    venue = Venue.query.get(venue_id)
+    
     form = VenueForm()
-    venue = Venue.query.get(venue_id).to_dict()
-    return render_template('forms/edit_venue.html', form=form, venue=venue)
+    form.name.data = venue.name
+    form.city.data = venue.city
+    form.state.data = venue.state
+    form.address.data = venue.address
+    form.phone.data = venue.phone
+    form.genres.data = venue.genres
+    form.image_link.data = venue.image_link
+    form.facebook_link.data = venue.facebook_link
+    form.website.data = venue.website
+    form.seeking_talent.data = venue.seeking_talent
+    form.seeking_description.data = venue.seeking_description
+    
+    return render_template('forms/edit_venue.html', form=form, venue=venue.to_dict())
 
 @app.route('/venues/<int:venue_id>/edit', methods=['POST'])
 def edit_venue_submission(venue_id):
-    venue = Venue.query.get(venue_id)
-
     error = False
+    venue = Venue.query.get(venue_id)
+    
     try:
         venue.name = request.form['name']
         venue.city = request.form['city']
@@ -436,17 +426,23 @@ def edit_venue_submission(venue_id):
         venue.phone = request.form['phone']
         tmp_genres = request.form.getlist('genres')
         venue.genres = ','.join(tmp_genres)
+        venue.image_link = request.form['image_link']
         venue.facebook_link = request.form['facebook_link']
+        venue.website = request.form['website']
+        venue.seeking_talent = True if 'seeking_talent' in request.form else False
+        venue.seeking_description = request.form['seeking_description']
+        
         db.session.add(venue)
         db.session.commit()
-    except:
+    except Exception as err:
         error = True
         db.session.rollback()
+        print(err)
         print(sys.exc_info())
-    finally:
+    finally:    
         db.session.close()
         if error:
-            flash('An error occurred. Venue ' + request.form['name'] + 'could not be updated.')
+            flash('An error occurred. Venue ' + request.form['name'] + ' could not be updated.')
         else:
             flash('Venue ' + request.form['name'] + ' was updated.')
     
@@ -477,6 +473,7 @@ def create_artist_submission():
         artist.website_link = request.form['website_link']
         artist.image_link = request.form['image_link']
         artist.facebook_link = request.form['facebook_link']
+        artist.seeking_venue = True if 'seeking_venue' in request.form else False
         artist.seeking_description = request.form['seeking_description']
         db.session.add(artist)
         db.session.commit()
