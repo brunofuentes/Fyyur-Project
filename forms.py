@@ -1,8 +1,18 @@
 from datetime import datetime
 from flask_wtf import FlaskForm
 from wtforms import StringField, SelectField, SelectMultipleField, DateTimeField, BooleanField
-from wtforms.validators import DataRequired, AnyOf, URL, Regexp
+from wtforms.validators import DataRequired, AnyOf, URL, Regexp, ValidationError
 from enums import State, Genre
+
+def ValidateGenres(genres):
+    def validate(form, field):
+        error = False
+        for value in field.data:
+            if value not in genres:
+                error = True
+        if error:
+            raise ValidationError('Genre not valid')
+    return validate
 
 class ShowForm(FlaskForm):
     artist_id = StringField(
@@ -38,8 +48,8 @@ class VenueForm(FlaskForm):
         'image_link'
     )
     genres = SelectMultipleField(
-        'genres', validators=[DataRequired(), AnyOf([item.value for item in Genre])],
-        choices=Genre.items()
+        'genres', validators=[DataRequired(), ValidateGenres([item.value for item in Genre])],
+        choices=Genre.items()    
     )
     facebook_link = StringField(
         'facebook_link', validators=[URL()]
@@ -54,8 +64,6 @@ class VenueForm(FlaskForm):
         'seeking_description'
     )
 
-
-
 class ArtistForm(FlaskForm):
     name = StringField(
         'name', validators=[DataRequired()]
@@ -69,17 +77,20 @@ class ArtistForm(FlaskForm):
     )
     phone = StringField(
         # TODO implement validation logic for state
-        'phone', validators=[Regexp('^(\+\d{1,2}\s)?\(?\d{3}\)?[\s.-]\d{3}[\s.-]\d{4}$', 0, message='Invalid phone number')]
+        'phone', validators=[Regexp('^\w+$', message='Invalid phone number')]
     )
+    
+    # '^(\+\d{1,2}\s)?\(?\d{3}\)?[\s.-]\d{3}[\s.-]\d{4}$'
+    # '^\w+$'
+
     image_link = StringField(
         'image_link'
     )
     genres = SelectMultipleField(
-        'genres', validators=[DataRequired(), AnyOf([item.value for item in Genre])],
+        'genres', validators=[DataRequired(), ValidateGenres([item.value for item in Genre])],
         choices=Genre.items()
     )
     facebook_link = StringField(
-        # TODO implement enum restriction
         'facebook_link', validators=[URL()]
      )
 
