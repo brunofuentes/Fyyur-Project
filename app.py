@@ -32,7 +32,6 @@ migrate = Migrate(app, db)
 # Models.
 #----------------------------------------------------------------------------#
 
-
 class Venue(db.Model):
     __tablename__ = 'venues'
 
@@ -301,9 +300,6 @@ def delete_venue(venue_id):
             flash('Venue sucessfully deleted')
     return render_template('pages/home.html')
 
-    # BONUS CHALLENGE: Implement a button to delete a Venue on a Venue Page, have it so that
-    # clicking that button delete it from the db then redirect the user to the homepage
-
 #  Artists
 #  ----------------------------------------------------------------
 
@@ -359,7 +355,7 @@ def show_artist(artist_id):
 
 @app.route('/artists/<int:artist_id>/edit', methods=['GET'])
 def edit_artist(artist_id):
-    form = ArtistForm()
+    form = ArtistForm(request.form)
 
     artist = Artist.query.get(artist_id)
 
@@ -379,7 +375,7 @@ def edit_artist(artist_id):
 
 @app.route('/artists/<int:artist_id>/edit', methods=['POST'])
 def edit_artist_submission(artist_id):
-    
+
     error = False
     try:
         artist = Artist.query.get(artist_id)        
