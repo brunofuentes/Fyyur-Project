@@ -342,8 +342,8 @@ def show_artist(artist_id):
     past_shows = list(filter(lambda x: x.start_time < datetime.today(), artist.shows))
     upcoming_shows = list(filter(lambda x: x.start_time >= datetime.today(), artist.shows))
 
-    past_shows = list(map(lambda x: x.show_artist(), past_shows))
-    upcoming_shows = list(map(lambda x: x.show_artist(), upcoming_shows))
+    past_shows = list(map(lambda x: x.show_venue(), past_shows))
+    upcoming_shows = list(map(lambda x: x.show_venue(), upcoming_shows))
 
     data = artist.to_dict()
     data['past_shows'] = past_shows
@@ -360,7 +360,19 @@ def show_artist(artist_id):
 @app.route('/artists/<int:artist_id>/edit', methods=['GET'])
 def edit_artist(artist_id):
     form = ArtistForm()
-    artist = Artist.query.get(artist_id).to_dict()
+
+    artist = Artist.query.get(artist_id)
+
+    form.name.data = artist.name
+    form.city.data = artist.city
+    form.state.data = artist.state
+    form.phone.data = artist.phone
+    form.genres.data = artist.genres
+    form.image_link.data = artist.image_link
+    form.facebook_link.data = artist.facebook_link
+    form.website_link.data = artist.website_link
+    form.seeking_venue.data = artist.seeking_venue
+    form.seeking_description.data = artist.seeking_description
     
     return render_template('forms/edit_artist.html', form=form, artist=artist)
 
