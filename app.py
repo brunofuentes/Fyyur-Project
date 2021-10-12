@@ -355,7 +355,7 @@ def show_artist(artist_id):
 
 @app.route('/artists/<int:artist_id>/edit', methods=['GET'])
 def edit_artist(artist_id):
-    form = ArtistForm(request.form)
+    form = ArtistForm()
 
     artist = Artist.query.get(artist_id)
 
@@ -375,22 +375,24 @@ def edit_artist(artist_id):
 
 @app.route('/artists/<int:artist_id>/edit', methods=['POST'])
 def edit_artist_submission(artist_id):
-
-    error = False
     try:
-        artist = Artist.query.get(artist_id)        
-        artist.name = request.form['name']
-        artist.city = request.form['city']
-        artist.state = request.form['state']
-        artist.phone = request.form['phone']
-        tmp_genres = request.form.getlist('genres')
-        artist.genres = ','.join(tmp_genres)
-        artist.website_link = request.form['website_link']
-        artist.image_link = request.form['image_link']
-        artist.facebook_link = request.form['facebook_link']
-        artist.seeking_description = request.form['seeking_description']
-        db.session.add(artist)
-        db.session.commit()
+        error = False
+        artist = Artist.query.get(artist_id)
+        form = ArtistForm(request.form, meta={'csrf': False})
+
+        if form.validate():
+            artist.name = request.form['name']
+            artist.city = request.form['city']
+            artist.state = request.form['state']
+            artist.phone = request.form['phone']
+            tmp_genres = request.form.getlist('genres')
+            artist.genres = ','.join(tmp_genres)
+            artist.website_link = request.form['website_link']
+            artist.image_link = request.form['image_link']
+            artist.facebook_link = request.form['facebook_link']
+            artist.seeking_description = request.form['seeking_description']
+            db.session.add(artist)
+            db.session.commit()
     except:
         error = True
         db.session.rollback()
@@ -399,6 +401,8 @@ def edit_artist_submission(artist_id):
         db.session.close()
         if error:
             return redirect(url_for('server_error'))
+        elif form.errors:
+            return render_template('forms/edit_artist.html', form=form, artist=artist)
         else:
             return redirect(url_for('show_artist', artist_id=artist_id))
 

@@ -1,8 +1,10 @@
 from datetime import datetime
-from flask_wtf import FlaskForm
+from flask_wtf import FlaskForm, Form
 from wtforms import StringField, SelectField, SelectMultipleField, DateTimeField, BooleanField
+from wtforms import validators
 from wtforms.validators import DataRequired, AnyOf, URL, Regexp, ValidationError
 from enums import State, Genre
+
 
 def ValidateGenres(genres):
     def validate(form, field):
@@ -42,7 +44,7 @@ class VenueForm(FlaskForm):
         'address', validators=[DataRequired()]
     )
     phone = StringField(
-        'phone'
+        'phone', validators=[Regexp(r'^(\+\d{1,2}\s?)?1?\-?\.?\s?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}$', 0, message='Please insert a valid Phone Number')]
     )
     image_link = StringField(
         'image_link'
@@ -76,12 +78,8 @@ class ArtistForm(FlaskForm):
         choices=State.items()
     )
     phone = StringField(
-        # TODO implement validation logic for state
-        'phone', validators=[Regexp('^\w+$', message='Invalid phone number')]
+        'phone', validators=[Regexp(r'^(\+\d{1,2}\s?)?1?\-?\.?\s?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}$', 0, message='Please insert a valid Phone Number')]
     )
-    
-    # '^(\+\d{1,2}\s)?\(?\d{3}\)?[\s.-]\d{3}[\s.-]\d{4}$'
-    # '^\w+$'
 
     image_link = StringField(
         'image_link'
