@@ -3,17 +3,14 @@
 #----------------------------------------------------------------------------#
 
 import sys
-import json
-import os
 import dateutil.parser
 import babel
-from flask import Flask, render_template, request, Response, flash, redirect, url_for
+from flask import Flask, render_template, request, flash, redirect, url_for
 from flask_migrate import Migrate
 from flask_moment import Moment
 from flask_sqlalchemy import SQLAlchemy
 import logging
 from logging import Formatter, FileHandler
-from flask_wtf import Form
 from forms import *
 
 
@@ -48,11 +45,9 @@ class Venue(db.Model):
     seeking_talent = db.Column(db.Boolean, nullable=False, default=False)
     seeking_description = db.Column(db.String(120))
 
-    artists = db.relationship('Artist', secondary='shows')
-    shows = db.relationship('Show', backref=('venues'))
+    shows = db.relationship('Show', back_populates='venue')
 
     def to_dict(self):
-
         return {
             'id': self.id,
             'name': self.name,
@@ -86,8 +81,7 @@ class Artist(db.Model):
     seeking_venue = db.Column(db.Boolean, nullable=False, default=False)
     seeking_description = db.Column(db.String(120))
 
-    venues = db.relationship('Venue', secondary='shows')
-    shows = db.relationship('Show', backref=('artists'))
+    shows = db.relationship('Show', back_populates='artist')
 
     def to_dict(self):
         return {
@@ -116,8 +110,8 @@ class Show(db.Model):
     artist_id = db.Column(db.Integer, db.ForeignKey('artists.id'), nullable=False)
     start_time = db.Column(db.DateTime, nullable=False)
 
-    venue = db.relationship('Venue')
-    artist = db.relationship('Artist')
+    venue = db.relationship('Venue', back_populates='shows')
+    artist = db.relationship('Artist', back_populates='shows')
 
     def show_artist(self):
         return {
@@ -126,7 +120,6 @@ class Show(db.Model):
             'artist_image_link': self.artist.image_link,
             'start_time': self.start_time.strftime('%Y-%m-%d %H:%M:%S')
         }
-
 
     def show_venue(self):
         return {
@@ -306,8 +299,8 @@ def delete_venue(venue_id):
 
 @app.route('/artists')
 def artists():
-
-    return render_template('pages/artists.html', artists=Artist.query.all())
+    artists = Artist.query.all()
+    return render_template('pages/artists.html', artists=artists)
 
 
 @app.route('/artists/search', methods=['POST'])
@@ -427,38 +420,37 @@ def edit_venue(venue_id):
 
 @app.route('/venues/<int:venue_id>/edit', methods=['POST'])
 def edit_venue_submission(venue_id):
-    error = False
-    venue = Venue.query.get(venue_id)
-    
     try:
-        venue.name = request.form['name']
-        venue.city = request.form['city']
-        venue.state = request.form['state']
-        venue.address = request.form['address']
-        venue.phone = request.form['phone']
-        tmp_genres = request.form.getlist('genres')
-        venue.genres = ','.join(tmp_genres)
-        venue.image_link = request.form['image_link']
-        venue.facebook_link = request.form['facebook_link']
-        venue.website = request.form['website']
-        venue.seeking_talent = True if 'seeking_talent' in request.form else False
-        venue.seeking_description = request.form['seeking_description']
-        
-        db.session.add(venue)
-        db.session.commit()
-    except Exception as err:
+        error = False
+        venue = Venue.query.get(venue_id)
+        form = VenueForm(request.form, meta={'csrf': False})
+        if form.validate():
+            venue.name = request.form['name']
+            venue.city = request.form['city']
+            venue.state = request.form['state']
+            venue.address = request.form['address']
+            venue.phone = request.form['phone']
+            tmp_genres = request.form.getlist('genres')
+            venue.genres = ','.join(tmp_genres)
+            venue.image_link = request.form['image_link']
+            venue.facebook_link = request.form['facebook_link']
+            venue.website = request.form['website']
+            venue.seeking_talent = True if 'seeking_talent' in request.form else False
+            venue.seeking_description = request.form['seeking_description']
+            db.session.add(venue)
+            db.session.commit()
+    except:
         error = True
         db.session.rollback()
-        print(err)
-        print(sys.exc_info())
-    finally:    
+        print(sys.exc.info())
+    finally:
         db.session.close()
         if error:
-            flash('An error occurred. Venue ' + request.form['name'] + ' could not be updated.')
+            return redirect(url_for('server_error'))
+        elif form.errors:
+            return render_template('forms/edit_venue.html', form=form, venue=venue)
         else:
-            flash('Venue ' + request.form['name'] + ' was updated.')
-    
-    return redirect(url_for('show_venue', venue_id=venue_id))
+            return redirect(url_for('show_venue', venue_id=venue_id))
 
 #  Create Artist
 #  ----------------------------------------------------------------
@@ -525,7 +517,6 @@ def shows():
 
 @app.route('/shows/create')
 def create_shows():
-    # renders form. do not touch.
     form = ShowForm()
     return render_template('forms/new_show.html', form=form)
 
