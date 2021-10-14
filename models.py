@@ -28,7 +28,7 @@ class Venue(db.Model):
             'state': self.state,
             'address': self.address,
             'phone': self.phone,
-            'genres': self.genres.split(','),  # convert string to list
+            'genres': self.genres,
             'image_link': self.image_link,
             'facebook_link': self.facebook_link,
             'website': self.website,
