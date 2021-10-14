@@ -15,6 +15,7 @@ from flask import (
 )
 from flask_migrate import Migrate
 from flask_moment import Moment
+from datetime import datetime
 import logging
 from logging import Formatter, FileHandler
 from forms import *
@@ -118,16 +119,33 @@ def search_venues():
 @app.route('/venues/<int:venue_id>')
 def show_venue(venue_id):
 
-    venue = Venue.query.get(venue_id)
+    venue = Venue.query.get_or_404(venue_id)
 
-    past_shows = list(filter(lambda x: x.start_time < datetime.today(), venue.shows))
+    past_shows = []
+    upcoming_shows = []
 
-    upcoming_shows = list(filter(lambda x: x.start_time >= datetime.today(), venue.shows))
+    for show in venue.shows:
+        temp_show = {
+            'artist_id': show.artist_id,
+            'artist_name': show.artist.name,
+            'artist_image_link': show.artist.image_link,
+            'start_time': show.start_time.strftime('%m/%d/%Y, %H:%M')
+        }
+        if show.start_time <= datetime.now():
+            past_shows.append(temp_show)
+        else:
+            upcoming_shows.append(temp_show)
 
-    past_shows = list(map(lambda x: x.show_artist(), past_shows))
-    upcoming_shows = list(map(lambda x: x.show_artist(), upcoming_shows))
+    # past_shows = list(filter(lambda x: x.start_time < datetime.today(), venue.shows))
+
+    # upcoming_shows = list(filter(lambda x: x.start_time >= datetime.today(), venue.shows))
+
+    # past_shows = list(map(lambda x: x.show_artist(), past_shows))
+    # upcoming_shows = list(map(lambda x: x.show_artist(), upcoming_shows))
 
     data = venue.to_dict()
+
+    # data = vars(venue)
     data['past_shows'] = past_shows
     data['upcoming_shows'] = upcoming_shows
     data['past_shows_count'] = len(past_shows)
@@ -200,29 +218,54 @@ def delete_venue(venue_id):
 
 @app.route('/artists')
 def artists():
-    artists = Artist.query.all()
-    return render_template('pages/artists.html', artists=artists)
 
+    data_artists = []
+
+    artists = Artist.query.with_entities(Artist.id, Artist.name) \
+        .order_by('id').all()
+
+    for artist in artists:
+        upcoming_shows = db.session \
+            .query(Show) \
+            .filter(Show.artist_id == artist.id) \
+            .filter(Show.start_time > datetime.now()) \
+            .all()
+        
+        data_artists.append({
+            'id': artist.id,
+            'name': artist.name,
+            'num_upcoming_shows': len(upcoming_shows)
+        })
+
+    return render_template('pages/artists.html', artists=data_artists)
 
 @app.route('/artists/search', methods=['POST'])
 def search_artists():
+
     search_term = request.form.get('search_term')
-    artists = Artist.query.filter(Artist.name.ilike('%{}%)'.format(search_term))).all()
+    artists = Artist.query.filter(
+        Artist.name.ilike('%{}%'.format(search_term))).all()
 
-    data = []
+    data_artists = []
     for artist in artists:
-        tmp = {}
-        tmp['id'] = artist.id
-        tmp['name'] = artist.name
-        tmp['num_upcoming_shows'] = len(artist.shows)
-        data.append(tmp)
+        upcoming_shows = db.session \
+                .query(Show) \
+                .filter(Show.artist_id == artist.id) \
+                .filter(Show.start_time > datetime.now()) \
+                .all()
 
-    response = {}
-    response['count'] = len(data)
-    response['data'] = data
+        data_artists.append({
+            'id': artist.id,
+            'name': artist.name,
+            'num_upcoming_shows': len(upcoming_shows)
+        })
 
-    return render_template('pages/search_artists.html', results=response, search_term=request.form.get('search_term', ''))
+    response = {
+        'data': data_artists,
+        'count': len(artists)
+    }
 
+    return render_template('pages/search_artists.html', results=response, search_term=search_term)
 
 @app.route('/artists/<int:artist_id>')
 def show_artist(artist_id):

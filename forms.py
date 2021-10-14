@@ -50,7 +50,7 @@ class VenueForm(FlaskForm):
     )
     genres = SelectMultipleField(
         'genres', validators=[DataRequired(), ValidateGenres([item.value for item in Genre])],
-        choices=Genre.items()    
+        choices=Genre.items()
     )
     facebook_link = StringField(
         'facebook_link', validators=[URL()]
