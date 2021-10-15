@@ -11,7 +11,7 @@ class Venue(db.Model):
     state = db.Column(db.String(120))
     address = db.Column(db.String(120))
     phone = db.Column(db.String(120))
-    genres = db.Column(db.String, nullable=False)
+    genres = db.Column(db.ARRAY(db.String), nullable=False)
     image_link = db.Column(db.String(500))
     facebook_link = db.Column(db.String(120))
     website = db.Column(db.String(120))
@@ -29,7 +29,7 @@ class Venue(db.Model):
             'state': self.state,
             'address': self.address,
             'phone': self.phone,
-            'genres': self.genres.split(','),
+            'genres': self.genres,
             'image_link': self.image_link,
             'facebook_link': self.facebook_link,
             'website': self.website,
@@ -75,7 +75,6 @@ class Artist(db.Model):
 
     def __repr__(self):
         return f'<Artist {self.id} {self.name}>'
-
 
 class Show(db.Model):
     __tablename__ = 'shows'
