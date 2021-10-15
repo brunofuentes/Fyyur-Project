@@ -262,9 +262,9 @@ def show_artist(artist_id):
 
     for show in artist.shows:
         temp_show = {
-            'artist_id': show.artist_id,
-            'artist_name': show.artist.name,
-            'artist_image_link': show.artist.image_link,
+            'venue_id': show.venue_id,
+            'venue_name': show.venue.name,
+            'venue_image_link': show.venue.image_link,
             'start_time': show.start_time.strftime('%m %d %Y, %H:%M')
         }
         if show.start_time <= datetime.now():
@@ -330,7 +330,7 @@ def edit_artist_submission(artist_id):
 
 @app.route('/venues/<int:venue_id>/edit', methods=['GET'])
 def edit_venue(venue_id):
-    
+
     venue = Venue.query.get(venue_id)
     form = VenueForm(obj=venue)
 
@@ -403,24 +403,40 @@ def create_artist_submission():
             flash('Artist ' + request.form['name'] + ' was successfully listed!')
         return render_template('pages/home.html')
 
-
 #  Shows
 #  ----------------------------------------------------------------
 
 @app.route('/shows')
 def shows():
-    shows = Show.query.all()
+    # shows = Show.query.all()
 
     data = []
-    for show in shows:
+
+    results = db.session.query(Show, Venue, Artist) \
+        .join(Venue, Show.venue_id == Venue.id) \
+        .join(Artist, Show.artist_id == Artist.id) \
+        .order_by(Show.start_time.desc()) \
+        .all()
+
+    for show, venue, artist in results:
         data.append({
-            'venue_id': show.venue.id,
-            'venue_name': show.venue.name,
-            'artist_id': show.artist.id,
-            'artist_name': show.artist.name,
-            'artist_image_link': show.artist.image_link,
-            'start_time': show.start_time.isoformat()
+            'venue_id': venue.id,
+            'venue_name': venue.name,
+            'artist_id': artist.id,
+            'artist_name': artist.name,
+            'artist_image_link': artist.image_link,
+            'start_time': show.start_time.strftime('%m %d %Y, %H:%M')
         })
+
+    # for show in shows:
+    #     data.append({
+    #         'venue_id': show.venue.id,
+    #         'venue_name': show.venue.name,
+    #         'artist_id': show.artist.id,
+    #         'artist_name': show.artist.name,
+    #         'artist_image_link': show.artist.image_link,
+    #         'start_time': show.start_time.isoformat()
+    #     })
 
     return render_template('pages/shows.html', shows=data)
 
