@@ -144,8 +144,6 @@ def show_venue(venue_id):
     data['past_shows_count'] = len(past_shows)
     data['upcoming_shows_count'] = len(upcoming_shows)
 
-    print(venue.to_dict())
-
     return render_template('pages/show_venue.html', venue=data)
 
 #  Create Venue
