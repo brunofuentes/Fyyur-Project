@@ -25,11 +25,13 @@ from models import db, Venue, Artist, Show
 # App Config.
 #----------------------------------------------------------------------------#
 
+
 app = Flask(__name__)
 moment = Moment(app)
 app.config.from_object('config')
 db.init_app(app)
 migrate = Migrate(app, db)
+
 
 #----------------------------------------------------------------------------#
 # Filters.
@@ -54,7 +56,6 @@ app.jinja_env.filters['datetime'] = format_datetime
 @app.route('/')
 def index():
     return render_template('pages/home.html')
-
 
 #  Venues
 #  ----------------------------------------------------------------
@@ -284,7 +285,6 @@ def show_artist(artist_id):
 #  Update
 #  ----------------------------------------------------------------
 
-
 @app.route('/artists/<int:artist_id>/edit', methods=['GET'])
 def edit_artist(artist_id):
     form = ArtistForm()
@@ -307,8 +307,7 @@ def edit_artist_submission(artist_id):
             artist.city = request.form['city']
             artist.state = request.form['state']
             artist.phone = request.form['phone']
-            tmp_genres = request.form.getlist('genres')
-            artist.genres = ','.join(tmp_genres)
+            artist.genres = request.form.getlist('genres')
             artist.website_link = request.form['website_link']
             artist.image_link = request.form['image_link']
             artist.facebook_link = request.form['facebook_link']
@@ -348,8 +347,7 @@ def edit_venue_submission(venue_id):
             venue.state = request.form['state']
             venue.address = request.form['address']
             venue.phone = request.form['phone']
-            tmp_genres = request.form.getlist('genres')
-            venue.genres = ','.join(tmp_genres)
+            venue.genres = request.form.getlist('genres')
             venue.image_link = request.form['image_link']
             venue.facebook_link = request.form['facebook_link']
             venue.website = request.form['website']
@@ -408,7 +406,7 @@ def create_artist_submission():
 
 @app.route('/shows')
 def shows():
-    # shows = Show.query.all()
+    shows = Show.query.all()
 
     data = []
 
@@ -427,16 +425,6 @@ def shows():
             'artist_image_link': artist.image_link,
             'start_time': show.start_time.strftime('%m %d %Y, %H:%M')
         })
-
-    # for show in shows:
-    #     data.append({
-    #         'venue_id': show.venue.id,
-    #         'venue_name': show.venue.name,
-    #         'artist_id': show.artist.id,
-    #         'artist_name': show.artist.name,
-    #         'artist_image_link': show.artist.image_link,
-    #         'start_time': show.start_time.isoformat()
-    #     })
 
     return render_template('pages/shows.html', shows=data)
 

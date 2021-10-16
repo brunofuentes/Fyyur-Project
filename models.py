@@ -48,7 +48,7 @@ class Artist(db.Model):
     city = db.Column(db.String(120))
     state = db.Column(db.String(120))
     phone = db.Column(db.String(120))
-    genres = db.Column(db.String, nullable=False)
+    genres = db.Column(db.ARRAY(db.String), nullable=False)
     image_link = db.Column(db.String(500))
     website_link = db.Column(db.String(500))
     facebook_link = db.Column(db.String(120))
@@ -57,6 +57,7 @@ class Artist(db.Model):
 
     venues = db.relationship('Venue', secondary='shows', back_populates='artists')
     shows = db.relationship('Show', backref='artists', lazy='joined', cascade='all, delete')
+    
 
     def to_dict(self):
         return {
@@ -65,7 +66,7 @@ class Artist(db.Model):
             'city': self.city,
             'state': self.state,
             'phone': self.phone,
-            'genres': self.genres.split(','),
+            'genres': self.genres,
             'image_link': self.image_link,
             'website_link': self.website_link,
             'facebook_link': self.facebook_link,
