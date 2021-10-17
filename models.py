@@ -18,8 +18,7 @@ class Venue(db.Model):
     seeking_talent = db.Column(db.Boolean, nullable=False, default=False)
     seeking_description = db.Column(db.String(120))
 
-    # artists = db.relationship('Artist', secondary='shows', back_populates='venues')
-    shows = db.relationship('Show', backref='venues', lazy='joined', cascade='all, delete')
+    shows = db.relationship('Show', backref='venue', lazy='joined', cascade='all, delete')
 
     def to_dict(self):
         return {
@@ -55,8 +54,7 @@ class Artist(db.Model):
     seeking_venue = db.Column(db.Boolean, nullable=False, default=False)
     seeking_description = db.Column(db.String(120))
 
-    # venues = db.relationship('Venue', secondary='shows', back_populates='artists')
-    shows = db.relationship('Show', backref='artists', lazy='joined', cascade='all, delete')
+    shows = db.relationship('Show', backref='artist', lazy='joined', cascade='all, delete')
     
 
     def to_dict(self):
@@ -84,9 +82,6 @@ class Show(db.Model):
     venue_id = db.Column(db.Integer, db.ForeignKey('venues.id'), nullable=False)
     artist_id = db.Column(db.Integer, db.ForeignKey('artists.id'), nullable=False)
     start_time = db.Column(db.DateTime, nullable=False)
-
-    venue = db.relationship('Venue')
-    artist = db.relationship('Artist')
 
     def show_artist(self):
         return {
